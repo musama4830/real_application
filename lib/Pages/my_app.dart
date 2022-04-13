@@ -25,6 +25,7 @@ class _MyAppState extends State<MyApp> {
     //   date: DateTime.now(),
     // ),
   ];
+  bool showChart = false;
 
   List<Transaction> get _recentTransactions {
     return transactions.where((tx) {
@@ -68,25 +69,65 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    final appBar = AppBar(
+      title: const Text('Flutter Real App'),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => startAddNewTransitions(context),
+        ),
+      ],
+    );
+
+    final txListWidget = Container(
+      height: (mediaQuery.size.height -
+              appBar.preferredSize.height -
+              mediaQuery.padding.top) *
+          0.7,
+      child: TransactionList(transactions, deleteTransaction),
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter Real App'),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => startAddNewTransitions(context),
-            ),
-          ],
-        ),
+        appBar: appBar,
         body: Column(
           children: [
-            Chart(_recentTransactions),
-            TransactionList(transactions, deleteTransaction),
+            if (isLandscape)
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text('Show Chart'),
+                Switch(
+                    value: showChart,
+                    onChanged: (val) {
+                      setState(() {
+                        showChart = val;
+                      });
+                    }),
+              ]),
+            if (!isLandscape)
+              Container(
+                height: (mediaQuery.size.height -
+                        appBar.preferredSize.height -
+                        mediaQuery.padding.top) *
+                    0.3,
+                child: Chart(_recentTransactions),
+              ),
+            if (!isLandscape) txListWidget,
+            if (isLandscape) showChart
+                ? Container(
+                    height: (mediaQuery.size.height -
+                            appBar.preferredSize.height -
+                            mediaQuery.padding.top) *
+                        0.7,
+                    child: Chart(_recentTransactions),
+                  )
+                : txListWidget,
           ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
